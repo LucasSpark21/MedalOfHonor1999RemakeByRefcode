@@ -1,0 +1,86 @@
+main:
+	exec global/exploder.scr
+	exec global/ai.scr
+	exec global/spotlight.scr
+	exec global/loadout.scr maps/test_MOH_M1L2.scr
+	
+	thread global/barrel.scr::explosive_barrel
+	
+level waittill prespawn
+	level.script = maps/test_MOH_M1L2.scr
+	exec global/exploder.scr
+	$train_destroyed hide
+
+level waittill spawn
+	// Armes (Reprendre celles du niveau précédent)
+	//$mg42 thread global/mg42_active.scr::mg42
+	//$player item weapons/m1_garand.tik
+	$player ammo rifle 48
+	//$player useweaponclass rifle
+	
+	// Son
+	$player stufftext "tmstartloop sound/music/MOH_Rescuing_G3_Officer.mp3"
+	soundtrack music/MOH_M1L2.mus
+	
+	// Objectifs
+	waitthread global/objectives.scr::add_objectives 1 2 "Détruire l'émetteur radio." $radio.origin
+	waitthread global/objectives.scr::add_objectives 2 2 "Neutraliser les hommes de la gestapo."
+	waitthread global/objectives.scr::add_objectives 3 2 "Localiser maquisard." $endlevel.origin
+	waitthread global/objectives.scr::current_objectives 1
+	
+	thread objective1
+	$lockednaxos lock
+	$radiosmashed hide
+	$exploderfire anim stop
+	exec global/door_locked.scr
+	//exec global/door_locked.scr::lock
+	
+	level.nbofficiers = 0
+	$officier1 thread infokillgestapo
+	$officier2 thread infokillgestapo
+	$officier3 thread infokillgestapo
+	$officier4 thread infokillgestapo
+	$officier5 thread infokillgestapo
+	$officier6 thread infokillgestapo
+	$officier7 thread infokillgestapo
+	$officier8 thread infokillgestapo
+	$officier9 thread infokillgestapo
+	$officier10 thread infokillgestapo
+	$officier11 thread infokillgestapo
+	$officier12 thread infokillgestapo
+end
+
+objective1:
+	$radio waittill trigger
+	thread blowuptheradio
+	waitthread global/objectives.scr::add_objectives 1 3 "Détruire l'émetteur radio." $radio.origin
+	waitthread global/objectives.scr::current_objectives 3
+end
+
+blowuptheradio:	
+	$radionotsmashed remove
+	$radiosmashed show
+	$exploderfire anim start
+	$radio playsound explode_prototype
+end
+
+infokillgestapo:
+	if (IsAlive self)
+		self waittill death	
+	level.nbofficiers = (level.nbofficiers + 1)
+	if (level.nbofficiers == 6) {
+		wait 2
+		iprintlnbold "Groupe de la gestapo neutralisé à moitié."
+	}
+	if (level.nbofficiers == 12) {
+		wait 0.5
+		waitthread global/objectives.scr::add_objectives 2 3 "Neutraliser les hommes de la gestapo."
+		waitthread global/objectives.scr::current_objectives 3
+	}
+end
+
+endmission:
+	waitthread global/objectives.scr::add_objectives 3 3 "Localiser maquisard." $endlevel.origin
+	waitthread global/objectives.scr::current_objectives 0
+	exec global/missioncomplete.scr test_MOH_M1L3 1 //exec global/missioncomplete.scr transfer
+end

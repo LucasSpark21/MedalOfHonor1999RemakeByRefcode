@@ -1,0 +1,126 @@
+main:
+	exec global/exploder.scr
+	exec global/ai.scr
+	exec global/spotlight.scr
+	exec global/loadout.scr maps/test_MOH_M2L4.scr
+	
+level waittill prespawn
+	level.script = maps/test_MOH_M2L4.scr
+	exec global/exploder.scr
+
+level waittill spawn	
+	// Son
+	$player stufftext "tmstartloop sound/music/mus_10a_action.mp3"
+	thread global/door_locked.scr::lock
+	thread global/barrel.scr::explosive_barrel	 
+	exec global/ambient.scr m4l2
+	
+	// Objectifs
+	waitthread global/objectives.scr::add_objectives 1 2 "Posez les explsifs sur Greta [4 restants]" $bomb01.origin
+	waitthread global/objectives.scr::current_objectives 1	
+	
+	waitthread global/items.scr::add_item "binoculars" noprint		// Show binoculars inventory icon
+	waitthread global/items.scr::add_item "radio_explosives" noprint	// Show radio_explosives inventory icon
+	
+	level.bombedgreta = 0
+	level.greta01_bombplanted = 0
+	level.greta02_bombplanted = 0
+	level.greta03_bombplanted = 0
+	level.greta04_bombplanted = 0
+	
+	// Turret threads
+	$turret1.max_range = 1024
+	$turret1.pitchcaps = ( -35 35 0)
+	$turret1 thread global/mg42_active.scr::mg42
+	$turret2.max_range = 2048
+	$turret2.pitchcaps = ( -15 13 0)
+	$turret2 thread global/mg42_active.scr::mg42
+	$turret3.max_range = 2048
+	$turret3.pitchcaps = ( -15 13 0)
+	$turret3 thread global/mg42_active.scr::mg42
+	$turret4.max_range = 1024
+	$turret4.pitchcaps = ( -10 15 0)
+	$turret4 thread global/mg42_active.scr::mg42
+end
+
+//*********************************************
+// Bomb greta 1
+//*********************************************
+greta01_bombed:
+	$bomb01 model "animate//radiobomb.tik"
+	$bomb01 playsound radiobomb
+	level.greta01_bombplanted = 1
+	thread nextgreta
+end
+
+//*********************************************
+// Bomb greta 2
+//*********************************************
+greta02_bombed:
+	$bomb02 model "animate//radiobomb.tik"
+	$bomb02 playsound radiobomb
+	level.greta02_bombplanted = 1
+	thread nextgreta
+end
+
+//*********************************************
+// Bomb greta 3
+//*********************************************
+greta03_bombed:
+	$bomb03 model "animate//radiobomb.tik"
+	$bomb03 playsound radiobomb
+	level.greta03_bombplanted = 1
+	thread nextgreta
+end
+
+//*********************************************
+// Bomb greta 4
+//*********************************************
+greta04_bombed:
+	$bomb04 model "animate//radiobomb.tik"
+	$bomb04 playsound radiobomb
+	level.greta04_bombplanted = 1
+	thread nextgreta
+end
+
+//*********************************************
+// Determine objective - printing and compass waypoint
+//*********************************************
+nextgreta:
+	level.bombedgreta = (level.bombedgreta + 1)
+	
+	if (level.bombedgreta == 4) 
+	{
+		waitthread global/objectives.scr::add_objectives 1 3 "Détruire Greta."
+		thread tanks_explode
+	}
+end
+
+//*********************************************
+// Greta explosion
+//*********************************************
+tanks_explode:
+	$player loopsound bombtick
+	$player stopwatch 8
+	wait 8
+	$player stoploopsound bombtick
+	
+	$bomb01 playsound explode_tank
+	$bomb01 thread global/vehicles_thinkers.scr::tank_killed
+	$bomb01 remove
+	
+	$bomb02 playsound explode_tank
+	$bomb02 thread global/vehicles_thinkers.scr::tank_killed
+	$bomb02 remove
+	
+	$bomb03 playsound explode_tank
+	$bomb03 thread global/vehicles_thinkers.scr::tank_killed
+	$bomb03 remove
+	
+	$bomb04 playsound explode_tank
+	$bomb04 thread global/vehicles_thinkers.scr::tank_killed
+	$bomb04 remove
+	
+	wait 3
+	exec global/missioncomplete.scr transfer
+end

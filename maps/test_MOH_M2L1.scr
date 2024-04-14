@@ -1,0 +1,320 @@
+main:
+	exec global/exploder.scr
+	exec global/ai.scr
+	exec global/spotlight.scr
+	//exec global/loadout.scr maps/test_MOH_M2L1.scr
+	exec global/loadout.scr maps/m4l2.scr
+	//exec global/ambient.scr m2l2a
+	
+level waittill prespawn
+	level.script = maps/test_MOH_M2L1.scr
+	
+level waittill spawn
+	// Son
+	$player stufftext "tmstartloop sound/music/MOH_Taking_Out_Railgun.mp3"
+	soundtrack music/MOH_M2L1.mus
+	
+	// Armer le joueur
+	$player item weapons/silencedpistol.tik  
+	$player ammo pistol 16	
+	$player.has_disguise = 1
+	waitthread global/items.scr::add_item "papers_level1"
+	waitthread global/items.scr::add_item "uniform"
+	thread hints
+	$trainswitch2 hide
+	level.sentry2hintmessaged = 0
+	level.paper2ok = 0
+
+	waitthread global/objectives.scr::add_objectives 1 2 "Changer l'aiguillage." $trainswitch2_pulsating.origin
+	waitthread global/objectives.scr::add_objectives 2 2 "Trouver les papiers de niveau 2." $papers2.origin
+	waitthread global/objectives.scr::add_objectives 3 2 "Entrer dans la gare." $endlevel.origin
+	waitthread global/objectives.scr::current_objectives 1
+end
+
+check_papers:
+	if (level.paper2ok == 0) 
+	{
+		level.alarm = 1
+	}
+end
+
+
+sentry2hintmessage:
+	$papers2hint waittill trigger
+	if(level.sentry2hintmessaged != 1)
+	{
+		level.sentry2hintmessaged = 1
+		iprintlnbold "You need a new set of papers to procede past this point."
+	}
+end
+
+cardplayersdeath:
+	level.deadcardplayers = 0
+	self waittill death
+	level.deadcardplayers++
+	if(level.cardplayers != 3)
+		$suckyfatty attackplayer
+end
+
+hints:
+	local.key = getboundkey1 "Holster"
+	iprintlnbold_noloc (loc_convert_string "Press the ( ") (loc_convert_string local.key) (loc_convert_string " ) key to holster your weapon.")
+	wait 1
+	iprintlnbold "If your weapon is not holstered"
+	iprintlnbold "your cover will be blown."
+	wait 2
+
+end
+
+easyskill:
+	if(level.skillz != "0")
+	end
+	if(self.health > 50)
+		self.health = (self.health / 2)
+	self noticescale 1000
+	self accuracy (self.accuracy / 3)
+end
+
+
+huddrawrefresh:
+end
+
+sentry2thing:
+	$sentry2trigger waittill trigger
+	level.sentry2dude leash 2048
+	level.sentry2dude resetleash
+	level.sentry2dude attackplayer
+end
+
+wavesounds:
+	local.asdf = 1
+	for(local.i = 1;local.i <= $wavelaps.size;local.i++)
+		{
+			if($wavelaps[local.i].volume == "1")
+				$wavelaps[local.i] loopsound wave_laps_low 1
+			if($wavelaps[local.i].volume == "2")
+				$wavelaps[local.i] loopsound wave_laps_med 1
+			if($wavelaps[local.i].volume == "3")
+          		$wavelaps[local.i] loopsound wave_laps_high 1
+		}
+end
+
+
+unholsterweapon:
+	self unholster
+	self attackplayer
+end
+
+alarmall:
+	if(level.alarm != 1)
+	{
+     	$alarm_switch_trigger[1] douse $player
+	}
+end
+
+
+gate3lockedsound:
+	$gate3 playsound gate_metal_locked
+end
+//gate2lockedsound:
+//	$gate2 playsound gate_metal_locked_clue
+//end
+
+
+enablesentrytrigger:
+	level.goatsbutt exec global/enable_ai.scr
+	$sen1on nottriggerable
+	$sen1off nottriggerable
+end
+
+//sentry2dude:
+//	$sentry2dude waittill death
+//	wait 2
+//	if(level.gate2hasopened != 1)
+//	{
+//		thread gate2open
+//	}
+//end
+
+sentry1toggleon:
+	level.peopletalking = 1 //this is here since scientist will likely die during waittill say done
+	$sen1on waittill trigger
+	if(isalive level.goatsbutt)
+		level.goatsbutt exec global/enable_ai.scr
+	thread sentry1toggleoff
+end
+
+sentry1toggleoff:
+	level.peopletalking = 0 //this is here since scientist will likely die during waittill say done
+	$sen1off waittill trigger
+	if(isalive level.goatsbutt)
+		level.goatsbutt exec global/disable_ai.scr
+	thread sentry1toggleon
+end
+
+papers2pickup:
+	level.sentry2hintmessaged = 1
+	$papers2 remove
+	waitthread global/items.scr::remove_item "papers_level1"
+	waitthread global/items.scr::add_item "papers_level2"
+	thread objective2
+end
+
+obj6_complete:
+	$trainswitch2_pulsating remove
+	$trainswitch2 playsound track_switch2		// Play switch switch sound
+	$trainswitch2 show
+	$trainswitch2 anim move
+	$rightrail02 playsound track_switching		// Play rail switch sound
+	level.switch2_switched = 1
+	waitthread global/objectives.scr::add_objectives 1 3 "Tourner l'aiguillage."
+	waitthread global/objectives.scr::current_objectives 2
+end
+
+objective2:
+	waitthread global/objectives.scr::add_objectives 2 3 "Trouver les papiers de niveau 2." $obj2.origin
+	waitthread global/objectives.scr::current_objectives 3
+end
+
+objective3:
+	waitthread global/objectives.scr::add_objectives 3 3 "Entrer dans la gare." $endlevel.origin
+end
+
+playalarmsound:
+	while(1)
+	{
+		while(level.alarm == 1)
+		{
+			wait 85
+			$player playsound den_m2l2_258b
+   			for(local.i = 1;local.i <= $alarm_sound.size;local.i++)
+			{
+				if((vector_length ($player.origin - $alarm_sound[local.i].origin) < 1024))
+				{
+					$alarm_sound[local.i] playsound den_m2l2_258p
+				}
+			}
+		}
+		wait 1
+	}
+end
+
+waitforpeopletotalk:
+	wait 1
+	if(level.peopletalking == 1)
+		while(level.peopletalking == 1)
+			wait 2
+end
+
+endmission:
+	$endlevel waittill trigger
+	thread objective3
+	exec global/missioncomplete.scr test_MOH_M2L2 1
+end
+
+forceturn local.turn:
+	self exec global/disable_ai.scr
+	self exec global/stand.scr
+	self exec global/turnto.scr local.turn
+	wait .5
+	self exec global/enable_ai.scr
+end
+
+chasetalk local.guytochase local.realdest:
+	self.movedoneradius = 128
+	while((isalive local.guytochase) && (isalive self))
+	{
+		if((vector_length (self.origin - local.guytochase.origin) < 256))
+		{
+			self exec global/runto.scr local.guytochase
+			self waittill movedone
+			self exec global/stand.scr
+			waitframe
+			self exec global/walkto.scr local.realdest
+		}
+	wait 1
+	}
+end
+
+whattheydoin:
+	$whattheydointrig waittill trigger
+	if!(isalive level.whatsthesub)
+		end
+	if!(isalive level.hushyhushy)
+		end
+	level.whatsthesub type_disguise "none"
+	level.hushyhushy type_disguise "none"
+	level.whatsthesub thread forceturn level.hushyhushy
+	level.hushyhushy thread forceturn level.whatsthesub
+	wait .5
+	level.peopletalking = 1
+	waitthread whatsuptalk level.whatsthesub level.hushyhushy den_m2l2_221f
+	waitthread whatsuptalk level.hushyhushy level.whatsthesub den_m2l2_212b
+	waitthread whatsuptalk level.whatsthesub level.hushyhushy den_m2l2_223f
+     waitthread whatsuptalk level.hushyhushy level.whatsthesub den_m2l2_224b
+	waitthread whatsuptalk level.whatsthesub level.hushyhushy den_m2l2_225f
+     waitthread whatsuptalk level.hushyhushy level.whatsthesub den_m2l2_226b
+	level.peopletalking = 0
+	wait 2
+	if(isalive level.whatsthesube)
+		level.whatsthesub type_disguise "salute"
+	if(isalive level.hushyhushy)
+		level.hushyhushy type_disguise "salute"
+end
+
+sentry2accept:
+	level.paper2ok = 1
+	$sentry2trigger nottriggerable
+end
+
+sentry1trigdisable:
+	$sentry1trig nottriggerable
+end
+
+sentry1alarm:
+	$sentry1trig waittill trigger
+	if (isalive level.goatsbutt)
+	{ 
+		level.goatsbutt say den_alarm_01c
+		level.goatsbutt waittill saydone
+		level.goatsbutt attackplayer
+	}
+end
+
+cower:
+	self.stophammering = 1
+	self exec global/disable_ai.scr
+	self waittill animdone
+	self anim sledge_hammer_stop
+	self waittill animdone
+	self unholster
+	self exec global/enable_ai.scr
+	self attackplayer
+end
+
+//////////////////////////////
+/// supersecret Nazi tricks //
+//////////////////////////////
+
+specialmove1:
+	$specialmove waittill trigger
+	wait 1
+	level.whatsthesub exec global/disable_ai.scr
+	level.hushyhushy exec global/disable_ai.scr
+	level.whatsthesub anim specialmove
+	level.whatsthesub waittill animdone
+	level.hushyhushy anim specialmove
+	level.hushyhushy waittill animdone
+	level.whatsthesub exec global/enable_ai.scr
+	level.hushyhushy exec global/enable_ai.scr
+	wait 1
+	goto specialmove1
+end
+
+doorlocked:
+	self playsound door_wood_locked
+end
+
+doorlockedmetal:
+	self playsound door_metal_locked
+end

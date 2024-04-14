@@ -1,0 +1,101 @@
+start:
+
+level waittill prespawn
+drawhud 0
+
+level waittill spawn
+	exec global/briefing_save.scr
+
+// spawn the thread that will allow the player to skip the briefing
+thread briefingskip
+
+// prevent the player from trying to move around
+$player physics_off
+thread freezeplayerview
+
+//starts music track for mission briefing
+$player stufftext "tmstartloop sound/briefing/briefing_moh_1.mp3"
+//$player stufftext "tmstartloop sound/music/mus_Schmerzen_01a.mp3"
+//$player playsound mb4_music
+
+$player playsound slide_advance
+
+showmenu brief_m1_1 1
+
+wait 8
+$player playsound slide_advance
+showmenu brief_m1_2 1
+hidemenu brief_m1_1 1
+
+wait 4
+$player playsound slide_advance
+showmenu brief_m1_3 1
+hidemenu brief_m1_2 1
+
+wait 5
+$player playsound slide_advance
+showmenu brief_m1_4 1
+hidemenu brief_m1_3 1
+
+wait 7
+$player playsound slide_advance
+showmenu brief_m1_5 1
+hidemenu brief_m1_4 1
+
+wait 24
+$player playsound slide_advance
+showmenu brief_m1_6 1
+hidemenu brief_m1_5 1
+
+wait 13
+$player playsound slide_advance
+showmenu brief_m1_7 1
+hidemenu brief_m1_6 1
+
+wait 12
+$player playsound slide_advance
+showmenu brief_m1_8 1
+hidemenu brief_m1_7 1
+
+wait 30
+
+$player playsound slide_advance
+
+goto endbriefing
+
+end
+
+//-----------------------------------------------------------------------------
+
+endbriefing:
+
+$player stufftext "spmap test_MOH_M1L1a"
+
+end
+
+//-----------------------------------------------------------------------------
+
+briefingskip:
+
+	if($player.fireheld)
+	{
+		goto endbriefing
+	}
+	
+	// check again next server frame
+	wait 0.01
+	
+	goto briefingskip
+
+end
+
+//-----------------------------------------------------------------------------
+
+freezeplayerview:
+
+	$player.viewangles = (0 0 0)
+	
+	wait 0.01
+	goto freezeplayerview
+
+end
